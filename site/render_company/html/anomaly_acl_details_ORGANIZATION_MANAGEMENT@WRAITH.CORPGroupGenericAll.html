@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <title>Dashboard</title>
+    <meta charset="utf-8" />
+
+    <script type="text/javascript" src="../js/ag-grid-community.js"></script>
+    <script type="text/javascript" src="../js/vis.min.js"></script>
+    <script type="text/javascript" src="../js/dagre.min.js"></script>
+    <script type="text/javascript" src="../js/webfont.js"></script>
+    <script type="text/javascript" src="../js/bootstrap.js"></script>
+
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/popper.min.js"></script>
+    <script type="text/javascript" src="../js/bootstrap4.js"></script>
+    <!-- without bootstrap 4, there is a bug on the main dashboard (the tables at the bottom of the cards can no longer be open), this black magic is beyond my powers.... -->
+
+    <link rel="stylesheet" type="text/css" href="../css/graph.css" />
+
+    <link rel="stylesheet" type="text/css" href="../css/mazars-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.min.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap_4.0.0.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap-extended.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="../css/sb-admin.css" />
+
+    <link rel="stylesheet" href="../css/font.css" />
+
+    <link rel="icon" href="../assets/favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" type="text/css" href="../css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../css/description.css" />
+  </head>
+
+  <body>
+    <header>
+      <nav
+        class="navbar navbar-expand-lg navbar-dark mb-3"
+        style="background-color: rgb(44, 62, 80)"
+      >
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html" id="title">
+            <img src="../assets/hub.svg" class="mx-2" height="30" id="hub" />
+            AD Miner
+          </a>
+
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarColor01"
+            aria-controls="navbarColor01"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarColor01">
+            <ul class="navbar-nav me-auto" style="margin: auto">
+              <li class="nav-item" style="margin: auto">
+                <div class="ml-0 text-light" id="title_current_page">Group Anomaly ACL Details</div>
+              </li>
+
+              <li
+                class="nav-item ml-1"
+                style="margin: auto; display: none"
+                id="button_description"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  data-bs-toggle="offcanvas"
+                  href="#offcanvasExample"
+                  role="button"
+                  aria-controls="offcanvasExample"
+                >
+                  <img src="../assets/info_white.svg" height="20" />
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_download"
+                onclick="onBtnExport()"
+                title="Download grid data as CSV"
+              >
+                <a
+                  class="btn inline-block btn-circle"
+                  role="button"
+                  style="color: white;"
+                  id="button_download_link"
+                >
+                  <i class="bi bi-download"></i>
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_parameter"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseSettings"
+                  aria-expanded="false"
+                  aria-controls="collapseSettings"
+                >
+                  <img src="../assets/settings.svg" height="20" id="settings" />
+                </a>
+              </li>
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_path"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseNetwork"
+                  aria-expanded="false"
+                  aria-controls="collapseNetwork"
+                  onclick="displayPathGraph(last_path)"
+                >
+                  <img
+                    src="../assets/path_white.svg"
+                    height="20"
+                    id="settings"
+                  />
+                </a>
+              </li>
+            </ul>
+
+            <form class="form-inline my-2 my-lg-0 d-sm-none d-lg-block d-none">
+              <ul class="navbar-nav">
+                <div
+                  class="list-group search-bar-list-group"
+                  id="search-bar-list-group"
+                  style="
+                    margin-right: 20px;
+                    position: relative;
+                    z-index: 9999999999999;
+                    display: none;
+                  "
+                >
+                  <input
+                    class="form-control me-sm-2"
+                    type="text"
+                    placeholder="Search Node"
+                    onKeyUp="searchNode(this.value)"
+                  />
+                </div>
+              </ul>
+            </form>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div
+      class="offcanvas offcanvas-start"
+      tabindex="-1"
+      id="offcanvasExample"
+      aria-labelledby="offcanvasExampleLabel"
+    >
+      <div class="offcanvas-header">
+        <h3 class="offcanvas-title" id="offcanvasExampleLabel">Information</h3>
+        <button
+          type="button"
+          class="btn-close text-reset"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body">
+        <div>
+          <div id="description_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Description</h5>
+              <img
+                src="../assets/info.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_info"
+            >
+              An ACL (Access Control List) is a security mechanism that defines permissions and access rights for objects within the Active Directory structure.
+            </p>
+            <br />
+          </div>
+
+          <div id="risk_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Risk</h5>
+              <img
+                src="../assets/warning.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_risk"
+            >
+              Misconfigured ACL can create access points or privilege escalation that an attacker could use to compromise the domain.<br /><br /><i class='bi bi-star-fill'></i><i class='bi bi-star-fill'></i><i class='bi bi-star-fill'></i> : At least one domain admin as target<br /><i class='bi bi-star-fill'></i><i class='bi bi-star-fill'></i><i class='bi bi-star'></i> : At least one object has a path to domain admin<br /><i class='bi bi-star-fill'></i><i class='bi bi-star'></i><i class='bi bi-star'></i> : At least one object admin of a computer<br /><i class='bi bi-star'></i><i class='bi bi-star'></i><i class='bi bi-star'></i> : Other
+            </p>
+            <br />
+          </div>
+
+          <div id="poa_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Point of Attention</h5>
+              <img
+                src="../assets/security.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_poa"
+            >
+              Regularly review and clean up ACL entries for users and groups that no longer require them.
+            </p>
+            <br />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="row"
+      style="margin-right: 15px !important; margin-left: 15px !important"
+    >
+
+    <div class="card-body" style="height:90vh; min-height: 800px;">
+      <div id="grid-wrapper" class="gridWrapper">
+        <div id="myGrid" class="ag-theme-balham gridWrapper"></div>
+        <!--
+          Au choix pour les thèmes :
+            - ag-theme-alpine
+            - ag-theme-balham
+            - ag-theme-material
+        -->
+      </div>
+    </div>
+	  <script type="text/javascript" charset="utf-8">
+
+var bigGrid;
+// Adjust the size of columns depending on the number of columns, keeping a minimal width of 200px and adding a horizontal scroll if necessary
+function adjustSizeDependingOnNbOfColumns(params) {
+  if (document.getElementById('grid-wrapper').offsetWidth / params.columnApi.getColumns().length < 200) {
+    gridOptions.columnApi.autoSizeAllColumns();
+    bigGrid = true;
+  }
+  else {
+    params.api.sizeColumnsToFit({defaultMinWidth: 200,});
+    bigGrid = false;
+  }
+}
+
+function onBtnExport() {
+	/*
+	This function get the data of the grid, clears it of useless data and download it as a CSV file.
+	*/
+	var csvRawData = gridOptions.api.getDataAsCsv();
+	var csvData = csvRawData.replace(/<[^>]*>\s*/g, '');
+	const filename = 'data.csv';
+
+	const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    
+    const downloadLink = document.querySelector("#button_download_link");
+    downloadLink.href = url;
+    downloadLink.download = filename;
+}
+
+function sort_string(valueA, valueB){
+	if (valueA === valueB) {
+		return 0;
+	}
+	return (valueA > valueB) ? 1 : -1;
+}
+
+function sort_integer(valueA, valueB){
+	return valueA - valueB 
+}
+
+function customComparator(_valueA, _valueB, nodeA, nodeB) {
+	if (typeof _valueA === 'object'){
+		if (typeof _valueA.value === 'string'){
+			return sort_string(_valueA.value, _valueB.value)
+		}
+		return sort_integer(_valueA.value, _valueB.value)
+  	}
+	if (typeof _valueA === 'string'){
+		return sort_string(_valueA, _valueB)
+  	}
+	return sort_integer(_valueA, _valueB)
+}
+
+var columnDefs = [{
+                    field:"targets",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },{
+                    field:"Computers admin",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },{
+                    field:"Path to DA",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },];
+var rowData=[{'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 33@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ROLE ASSIGNMENTS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40C@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40D@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 5@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> AUTH POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40F@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 2@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1124@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1121@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADVANCED SECURITY@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> MANAGED AVAILABILITY SERVERS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_156A673DB2BF45D48@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_B3E37754DB7F4DE8B@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 64@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WORKLOAD MANAGEMENT SETTINGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 426@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41F@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> PROVISIONING POLICY AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNET MESSAGE FORMATS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 403@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 412@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> CONNECTIONS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1096@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 87@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 414@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 14@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41E@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 17@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 81A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> QUERY BASE DN AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> CLIENT ACCESS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> COMMANDFREQUENCY@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 39@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 7@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40F@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADDRESSING@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> OAB RESOURCES MANAGEMENT AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> DSN CUSTOMIZATION@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADMINISTRATIVE GROUPS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> GLOBAL SETTINGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADDRESS-TEMPLATES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 439@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 411@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> EXCHANGE ROUTING GROUP (DWBGZMFD01QNBJR)@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40C@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40D@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 36@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> RECENTCOMMANDS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> DELEGATED SETUP@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 32@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41E@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1130@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 424@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 414@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 13@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> TRANSPORT FEATURE OVERRIDES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SERVICEENDPOINTS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 31770@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> COMPLIANCE MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 407@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADMIN AUDIT LOG AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_5662B6499D81481EA@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ACCEPTED DOMAINS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 62@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 70@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MESSAGE HYGIENE@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MAILBOX CREATION TIME AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1160@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 412@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 42@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> PARTNER APPLICATIONS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 19@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 22@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 30@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 38@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADDRESSBOOK MAILBOX POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1134@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 403@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 12@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> PROBE@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> C0A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> CONNECTIONS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> POP3@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 43E@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 42D@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 427@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1132@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 2117@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 816@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 2068@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ROLES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 21@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 464@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> AUTODISCOVER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> RESPONDER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SAFELINKSVERSIONED@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MAILFLOWPOLICYTEMPLATESRTM@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> DATABASE AVAILABILITY GROUPS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 74@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> USERAGENTSCHANGES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MAINTENANCE@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41B@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40E@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> RULES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '<i class=\'<i bi bi-shuffle 000001\'></i>  <a class="grid-link" href=\'object_to_domain_admin_from_OUMICROSOFT_EXCHANGE_SECURITY_GROUPS%40WRAITH.CORP.html\'>1 path to Domain Admin&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'targets': '<i class="bi bi-building"></i> MICROSOFT EXCHANGE SECURITY GROUPS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> RETENTION POLICIES CONTAINER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '<i class=\'<i bi bi-shuffle 000001\'></i>  <a class="grid-link" href=\'object_to_domain_admin_from_Group%24141000-LDV9MS90TKNJ%40WRAITH.CORP.html\'>1 path to Domain Admin&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'targets': '<i class="bi bi-people-fill"></i> $141000-LDV9MS90TKNJ@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ENFORCEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 415@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERCEPTOR RULES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 27@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 55@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ARRAYS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 415@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INFORMATIONSTORE@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 54@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> ACTIVE DIRECTORY ADMINISTRATORS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> C1A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40B@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> JOURNALINGVERSIONED@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 10@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40E@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 420@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> HYBRID CONFIGURATION@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> HTTP@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 25@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1093@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> AVAILABILITY CONFIGURATION@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 408@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 405@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> PUBLIC FOLDER MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 6@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 26@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MESSAGE CLASSIFICATIONS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 427@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 42A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 410@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> FEDERATION TRUSTS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> OVERRIDES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 422@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 2141@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 418@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> RUS AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1118@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 421@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 40B@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 419@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> HELP DESK@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> UM MAILBOX POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> IMAP4@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> DISCOVERY MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 420@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 5146@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 20@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 424@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INSTALLEDMAILFLOWPOLICIESRTM@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '<i class=\'<i bi bi-shuffle 000001\'></i>  <a class="grid-link" href=\'object_to_domain_admin_from_GroupEXCHANGE_TRUSTED_SUBSYSTEM%40WRAITH.CORP.html\'>1 path to Domain Admin&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'targets': '<i class="bi bi-people-fill"></i> EXCHANGE TRUSTED SUBSYSTEM@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 81A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ENABLENOTIFICATIONEMAIL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 413@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> PROVISIONING POLICY CONTAINER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 67@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> SECURITY ADMINISTRATOR@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 75@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 456@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> OFFLINE ADDRESS LISTS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 71@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1158@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 16@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '<i class=\'<i bi bi-shuffle 000001\'></i>  <a class="grid-link" href=\'object_to_domain_admin_from_GroupEXCHANGE_WINDOWS_PERMISSIONS%40WRAITH.CORP.html\'>1 path to Domain Admin&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'targets': '<i class="bi bi-people-fill"></i> EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 31@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_EEB7D57B1FB548CF8@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 34@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 416@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_2BAE44F73C6440FEB@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> JOURNALING@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 43E@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 456@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 2108@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> DEFAULT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 57@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 426@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> CLASSIFICATIONDEFINITIONS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1108@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1100@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADDRESS LISTS CONTAINER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> AUTH CONFIGURATION@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 405@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> CONFIGURATION SETTINGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SCOPES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 8411@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> UM MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> DATABASES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 406@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MICROSOFT EXCHANGE@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 2070@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 402@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WATSONS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 8218@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1077@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> POLICYTIPMESSAGECONFIGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SETTING OVERRIDES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 9@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> TRANSPORT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41B@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> KILLSWITCHES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SCRIPTING AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SMTP RECEIVE CONNECTORS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 86@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 43F@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> DISPLAY-TEMPLATES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1153@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 422@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 2110@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 3076@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 804@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1074@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MAILBOX RESOURCES MANAGEMENT AGENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 73@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_D27DF2C10F6F4DCEB@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> TRANSPORTVERSIONED@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ROUTING GROUPS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41F@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> RECORDS MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MONITORING SETTINGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MALWARE FILTER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 404@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 425@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 15@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 43F@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SERVERS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> SERVER MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> TEAM MAILBOX PROVISIONING POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41D@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> VIEW-ONLY ORGANIZATION MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 406@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> C0A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 804@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ELC FOLDERS CONTAINER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 421@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ADDRESS-TYPES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> RECIPIENT MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1128@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> RETENTION POLICY TAG CONTAINER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 408@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_6352FF0D1E8A4B359@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> OUTOFBUDGETS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 11@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_1A7427FCEEAF44A0B@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 411@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 425@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> EXCHANGELEGACYINTEROP@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-person-fill"></i> SM_B155AF8B1A654AD7B@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 78@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> OUTLOOK@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1107@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 63@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1136@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SYNCCOMMANDS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 41D@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 29@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 24@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 402@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MOBILE MAILBOX POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> PUSH NOTIFICATIONS SETTINGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 43@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1159@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> SECURITY READER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 409@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1101@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> REMOTE ACCOUNTS POLICIES CONTAINER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> C04@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> ELC MAILBOX POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 28@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 401@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 409@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 418@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 4@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SAFEATTACHMENTVERSIONED@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 8@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1082@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> AUTODISCOVER@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-people-fill"></i> HYGIENE MANAGEMENT@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 407@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 410@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> UPGRADEORCHESTRATION@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 429@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 3179@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 31748@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1115@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 3@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 401@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 68@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> CMDLETEXTENSIONAGENT SETTINGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> TRANSPORT SETTINGS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 464@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 42D@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 416@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> RBAC@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 65@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 404@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> OWA MAILBOX POLICIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 18@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 429@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 47@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 3098@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '<i class=\'<i bi bi-shuffle 000001\'></i>  <a class="grid-link" href=\'object_to_domain_admin_from_GroupEXCHANGE_SERVERS%40WRAITH.CORP.html\'>1 path to Domain Admin&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'targets': '<i class="bi bi-people-fill"></i> EXCHANGE SERVERS@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 439@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> FOLDER HIERARCHIES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> SMTP@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1106@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> C04@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 413@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1123@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 37@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 45@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 1076@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITHCORP@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 42A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> C1A@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MONITOR@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> OUTLOOKPROTECTIONRULES@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> WRAITH@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 816@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> MALWAREFILTERVERSIONED@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 419@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> INTERNAL@WRAITH.CORP'}, {'Computers admin': '-', 'Path to DA': '-', 'targets': '<i class="bi bi-box"></i> 8411@WRAITH.CORP'}];
+
+
+var url = new URL(window.location.href);
+var parameter = url.searchParams.get("parameter");
+if (parameter != null) {
+	arrayData = display_computer(parameter);
+	rowData = arrayData[0];
+	columnDefs = arrayData[1];
+}
+
+
+function display_computer(parameter) {
+	var rowData2 = [];
+	for (var i=0; i<rowData.length; i++) {
+		const keys = Object.keys(rowData[i]);
+
+		if (window.location.href.includes('users_admin_of_computers')) { 
+			if (rowData[i][keys[0]] == parameter) {
+				for (var k=0; k<rowData[i][keys[1]].length; k++) {
+					var new_dico = {};
+					new_dico[parameter] = rowData[i][keys[1]][k];
+					new_dico['href_link']='';
+					rowData2.push(new_dico);
+				}
+			}
+		}
+		else if (window.location.href.includes('kerberoastables_SPN')) {
+			if (rowData[i][keys[0]] == parameter) {
+				var new_dico = {};
+				new_dico[parameter] = rowData[i][keys[1]];
+				new_dico['href_link']='';
+				rowData2.push(new_dico);
+			}
+		}
+		else if (window.location.href.includes('users_rdp_access') || window.location.href.includes('computers_list_of_rdp_users')) {
+			
+			if (rowData[i][keys[0]].includes(parameter)) {
+				const startSubstring = "<p style='visibility:hidden;'>";
+				const endSubstring = "</p>";
+
+				const startIndex = rowData[i][keys[1]].indexOf(startSubstring) + startSubstring.length;
+				const endIndex = rowData[i][keys[1]].indexOf(endSubstring, startIndex);
+				data = JSON.parse(rowData[i][keys[1]].substring(startIndex, endIndex).replaceAll(`'`,`"`))
+				for (var j=0; j<data.length; j++) {
+					var new_dico = {};
+					new_dico[parameter] = data[j];
+					new_dico['href_link']='';
+					rowData2.push(new_dico);
+				}
+			}
+		}
+		else {
+			n = 2;
+			// In generic_formating.py, function formatGridValues3Columns
+			if (rowData[i][keys[0]] == parameter) {
+				data = JSON.parse(rowData[i][keys[n]]["value"].substring(91, rowData[i][keys[n]]["value"].length-4).replaceAll(`'`,`"`))
+				for (var j=0; j<data.length; j++) {
+					var new_dico = {};
+					new_dico[parameter] = data[j];
+					new_dico['href_link']='';
+					rowData2.push(new_dico);
+				}
+			}
+		}
+	}
+	columnDefs2 = [{field: parameter}];
+	return [rowData2, columnDefs2];
+}
+
+var url = new URL(window.location.href);
+var object = url.searchParams.get("object");
+if (object != null) {
+	arrayData = filterByObject(object);
+	rowData = arrayData[0];
+	columnDefs = arrayData[1];
+}
+
+function filterByObject(object) {
+	var rowData2 = [];
+	for (var i=0; i<rowData.length; i++) {
+		if (rowData[i]['TO CHANGE'].includes(object) && !rowData[i]['TO CHANGE'].includes('> ' + object + ' <')) {
+			new_dico = {object: '0'};
+			new_dico[object] = rowData[i]['TO CHANGE'].slice(rowData[i]['TO CHANGE'].indexOf('>')+2,-8);
+			rowData2.push(new_dico);
+		}
+	}
+	columnDefs2 = [{field: object}];
+	return [rowData2, columnDefs2];
+}
+
+// Grid options
+const gridOptions = {
+	columnDefs: columnDefs,
+	rowData: rowData,
+	defaultColDef: {resizable: true, filter: 'agTextColumnFilter', sortable: true, comparator: customComparator,},
+	suppressFieldDotNotation: true,
+	suppressHorizontalScroll: false,
+	animateRows: true,
+	pagination: true,
+	paginationPageSize: 100000,
+	enableCellTextSelection: true,
+	ensureDomOrder: true,
+	rowHeight: 38,
+	onGridReady: adjustSizeDependingOnNbOfColumns,
+	onGridSizeChanged: adjustSizeDependingOnNbOfColumns
+};
+
+
+// setup the grid after the page has finished loading
+document.addEventListener('DOMContentLoaded', function () {
+	var gridDiv = document.querySelector('#myGrid');
+	new agGrid.Grid(gridDiv, gridOptions);
+
+	// Adjust size of columns for large grids when scrolling horizontally
+	if (bigGrid) {
+		document.querySelector(".ag-body-horizontal-scroll-viewport").addEventListener("scroll", (event) => {
+			clearTimeout(window.scrollEndTimer)
+			window.scrollEndTimer = setTimeout((a) => {
+				gridOptions.columnApi.autoSizeAllColumns(); 
+			}, 100)
+		});
+	}
+});
+
+	  </script>
+
+
+    </div>
+
+
+  </body>
+  <!-- graph.js en dernier pour que les variables soient bien définies-->
+  <script type="text/javascript" src="../js/icon.js"></script>
+  <script type="text/javascript" src="../js/graph.js"></script>
+  <script type="text/javascript" src="../js/custom.js"></script>
+</html>	

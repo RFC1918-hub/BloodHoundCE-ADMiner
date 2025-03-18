@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <title>Dashboard</title>
+    <meta charset="utf-8" />
+
+    <script type="text/javascript" src="../js/ag-grid-community.js"></script>
+    <script type="text/javascript" src="../js/vis.min.js"></script>
+    <script type="text/javascript" src="../js/dagre.min.js"></script>
+    <script type="text/javascript" src="../js/webfont.js"></script>
+    <script type="text/javascript" src="../js/bootstrap.js"></script>
+
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/popper.min.js"></script>
+    <script type="text/javascript" src="../js/bootstrap4.js"></script>
+    <!-- without bootstrap 4, there is a bug on the main dashboard (the tables at the bottom of the cards can no longer be open), this black magic is beyond my powers.... -->
+
+    <link rel="stylesheet" type="text/css" href="../css/graph.css" />
+
+    <link rel="stylesheet" type="text/css" href="../css/mazars-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.min.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap_4.0.0.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap-extended.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="../css/sb-admin.css" />
+
+    <link rel="stylesheet" href="../css/font.css" />
+
+    <link rel="icon" href="../assets/favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" type="text/css" href="../css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../css/description.css" />
+  </head>
+
+  <body>
+    <header>
+      <nav
+        class="navbar navbar-expand-lg navbar-dark mb-3"
+        style="background-color: rgb(44, 62, 80)"
+      >
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html" id="title">
+            <img src="../assets/hub.svg" class="mx-2" height="30" id="hub" />
+            AD Miner
+          </a>
+
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarColor01"
+            aria-controls="navbarColor01"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarColor01">
+            <ul class="navbar-nav me-auto" style="margin: auto">
+              <li class="nav-item" style="margin: auto">
+                <div class="ml-0 text-light" id="title_current_page">DCsync path for SH3@PHANTOM.CORP</div>
+              </li>
+
+              <li
+                class="nav-item ml-1"
+                style="margin: auto; display: none"
+                id="button_description"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  data-bs-toggle="offcanvas"
+                  href="#offcanvasExample"
+                  role="button"
+                  aria-controls="offcanvasExample"
+                >
+                  <img src="../assets/info_white.svg" height="20" />
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_download"
+                onclick="onBtnExport()"
+                title="Download grid data as CSV"
+              >
+                <a
+                  class="btn inline-block btn-circle"
+                  role="button"
+                  style="color: white;"
+                  id="button_download_link"
+                >
+                  <i class="bi bi-download"></i>
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_parameter"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseSettings"
+                  aria-expanded="false"
+                  aria-controls="collapseSettings"
+                >
+                  <img src="../assets/settings.svg" height="20" id="settings" />
+                </a>
+              </li>
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_path"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseNetwork"
+                  aria-expanded="false"
+                  aria-controls="collapseNetwork"
+                  onclick="displayPathGraph(last_path)"
+                >
+                  <img
+                    src="../assets/path_white.svg"
+                    height="20"
+                    id="settings"
+                  />
+                </a>
+              </li>
+            </ul>
+
+            <form class="form-inline my-2 my-lg-0 d-sm-none d-lg-block d-none">
+              <ul class="navbar-nav">
+                <div
+                  class="list-group search-bar-list-group"
+                  id="search-bar-list-group"
+                  style="
+                    margin-right: 20px;
+                    position: relative;
+                    z-index: 9999999999999;
+                    display: none;
+                  "
+                >
+                  <input
+                    class="form-control me-sm-2"
+                    type="text"
+                    placeholder="Search Node"
+                    onKeyUp="searchNode(this.value)"
+                  />
+                </div>
+              </ul>
+            </form>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div
+      class="offcanvas offcanvas-start"
+      tabindex="-1"
+      id="offcanvasExample"
+      aria-labelledby="offcanvasExampleLabel"
+    >
+      <div class="offcanvas-header">
+        <h3 class="offcanvas-title" id="offcanvasExampleLabel">Information</h3>
+        <button
+          type="button"
+          class="btn-close text-reset"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body">
+        <div>
+          <div id="description_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Description</h5>
+              <img
+                src="../assets/info.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_info"
+            >
+              List of paths to a dcsync account.
+            </p>
+            <br />
+          </div>
+
+          <div id="risk_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Risk</h5>
+              <img
+                src="../assets/warning.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_risk"
+            >
+              These paths lead to accounts that have DCSync privileges. If one of these paths is exploited, the attacker will be able to dump all data from Active Directory (including users and machines password hashes). 
+            </p>
+            <br />
+          </div>
+
+          <div id="poa_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Point of Attention</h5>
+              <img
+                src="../assets/security.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_poa"
+            >
+              Review the paths, make sure they are not exploitable. If they are, cut the link between the Active Directory objects in order to reduce the attack surface.
+            </p>
+            <br />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="row"
+      style="margin-right: 15px !important; margin-left: 15px !important"
+    >
+<!-- <div id="wrapper"> -->
+
+<!-- <div><button id="clusterButton" class="btn btn-primary" onclick="clusterNodes()" style="display:none">Cluster nodes with >30 connections</button></div> -->
+
+<div id="hooker"></div>
+<!-- <div class="form-check form-switch" style="padding-left: 80px;">
+			<input type="checkbox" class="form-check-input" id="switchHideText" onchange="displayHideText(this)" checked>
+			<label class="form-check-label" for="switchHideText">Hide text</label>
+		</div> -->
+
+<div
+  class="collapse"
+  id="collapseSettings"
+  style="max-width: 60rem; margin: auto"
+>
+  <div class="card card-body border-primary">
+    <h5>Settings</h5>
+    <div class="row">
+      <div class="col">
+        <div
+          class="form-check form-switch"
+          style="padding-left: 80px"
+          id="switch_hide_node"
+        >
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="switchHideText"
+            onchange="displayHideNodes(this)"
+          />
+          <label class="form-check-label" for="switchHideText"
+            >Hide nodes</label
+          >
+        </div>
+        <div class="form-check form-switch" style="padding-left: 80px">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="switchHideText"
+            onchange="displayHideEdges(this)"
+          />
+          <label class="form-check-label" for="switchHideText"
+            >Hide edges</label
+          >
+        </div>
+
+        <div class="form-check form-switch" style="padding-left: 80px">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="switchHorizontalGraph"
+            onchange="horizontalGraph()"
+          />
+          <label class="form-check-label" for="switchHorizontalGraph"
+            >Graph layout</label
+          >
+        </div>
+      </div>
+
+      <div class="col">
+        <div>
+          <form>
+            <label for="cluster_threshold_range">Cluster Threshold</label>
+            <input
+              type="range"
+              name="cluster_threshold_range"
+              min="3"
+              max="200"
+              value="3"
+              oninput="this.form.cluster_threshold.value=this.value;"
+            />
+            <input
+              type="number"
+              id="cluster_threshold"
+              name="cluster_threshold"
+              min="3"
+              max="200"
+              value="3"
+              oninput="this.form.cluster_threshold_range.value=this.value;"
+            />
+            <button
+              class="refreshButton"
+              onclick="newThreshold(cluster_threshold.value)"
+            >
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <div class="tooltips">
+              <i class="bi bi-info-circle tooltipicon"></i>
+              <span class="tooltiptext"
+                >Refresh graph according to the new cluster threshold. It may
+                take a few seconds !</span
+              >
+            </div>
+          </form>
+        </div>
+        <style>
+          .refreshButton {
+            border-radius: 5px;
+          }
+
+          .tooltips {
+            position: relative;
+            display: inline-block;
+          }
+
+          .tooltipicon {
+            width: 25px;
+            margin-left: 5px;
+          }
+
+          .tooltips .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 5px;
+            position: absolute;
+            z-index: 1;
+            top: 150%;
+            left: 0%;
+            margin-left: -112px;
+          }
+
+          .tooltips .tooltiptext::after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent black transparent;
+          }
+
+          .tooltips:hover .tooltiptext {
+            visibility: visible;
+          }
+        </style>
+        <div>
+          Select end node :
+          <select class="form-select">
+            <option value="All End Nodes">All End Nodes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading box -->
+<!-- <div class="box" id="loadingBox">
+		<div class="percent">
+			<svg>
+				<circle cx="70" cy="70" r="70"></circle>
+				<circle cx="70" cy="70" r="70"></circle>
+				<circle cx="70" cy="70" r="70" id="progressCircle"></circle>
+			</svg>
+				<div class="num">
+					<h2><span id="loadingPourcent">0</span><span id="pourcentPourcent">%</span></h2>
+				</div>
+			</div>
+		<h2 class="text">Loading</h2>
+		<p>Parsing <span id="nbNodes">X</span> nodes and <span id="nbEdges">Y</span> edges...</p>
+		<p>Estimated time remaining : <span id="eta"></span></p>
+	</div>
+	 -->
+<div
+  id="collapseNetwork"
+  class="modal"
+  style="position: relative; --bs-modal-width: -1"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        Selected path
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          onclick="$('.modal')[0].style.display='';"
+        >
+          <span aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div id="pathnetwork"></div>
+    </div>
+  </div>
+</div>
+<div id="mynetwork"></div>
+<script type="text/javascript">window.data_nodes = [{'id': 330, 'label': '123456789.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 44, 'label': 'DOMAIN COMPUTERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 360, 'label': 'PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Domain', 'position': 'intermediate', 'attributes': ['da']}, {'id': 1454, 'label': 'TIER0@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'intermediate', 'attributes': []}, {'id': 1448, 'label': 'SERVICEACCOUNTS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'intermediate', 'attributes': []}, {'id': 242, 'label': 'SH3@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'end', 'attributes': []}, {'id': 334, 'label': 'ABCDEFGHIJKLMNO.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 116, 'label': 'ACCOUNT OPERATORS@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 347, 'label': 'GHOST-DC01.GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'intermediate', 'attributes': []}, {'id': 84, 'label': 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 232, 'label': 'ADDSELF@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 12, 'label': 'DOMAIN USERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 331, 'label': 'ADMINISTRATOR', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 337, 'label': 'ADMINSERVER01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 235, 'label': 'JD@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 9, 'label': 'ENTERPRISE ADMINS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 378, 'label': 'ALICE-ADM@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 1456, 'label': 'WORKSTATIONS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'intermediate', 'attributes': []}, {'id': 327, 'label': 'ALICE-LAPTOP.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'intermediate', 'attributes': []}, {'id': 224, 'label': 'ADMINISTRATOR@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 385, 'label': 'ALLOWLOGONLOCALLY@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 1458, 'label': 'DOMAIN CONTROLLERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'intermediate', 'attributes': []}, {'id': 343, 'label': 'DC01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'intermediate', 'attributes': []}, {'id': 340, 'label': 'AM-WIN10-DEV02.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 377, 'label': 'AUDIT@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 83, 'label': 'AUTHENTICATED USERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 127, 'label': 'BACKUP OPERATORS@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 229, 'label': 'BOB@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 240, 'label': 'CERTEXT@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 231, 'label': 'CERTMAN@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 523, 'label': 'COMPUTERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Container', 'position': 'start', 'attributes': []}, {'id': 326, 'label': 'JONAS-TEST-MS01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'intermediate', 'attributes': []}, {'id': 1450, 'label': 'COMPUTERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'start', 'attributes': []}, {'id': 1457, 'label': 'COMPUTERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'start', 'attributes': []}, {'id': 346, 'label': 'PAYMENT01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'intermediate', 'attributes': []}, {'id': 272, 'label': 'SVC_PAYADMIN@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 34, 'label': 'DOMAIN ADMINS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 262, 'label': 'DA-NOPW@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 270, 'label': 'DAVID@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 392, 'label': 'DEFAULT DOMAIN CONTROLLERS POLICY@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 1459, 'label': 'DOMAIN CONTROLLERS@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'intermediate', 'attributes': []}, {'id': 370, 'label': 'DEFAULT DOMAIN CONTROLLERS POLICY@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 391, 'label': 'DEFAULT DOMAIN POLICY@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 361, 'label': 'GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Domain', 'position': 'intermediate', 'attributes': ['da']}, {'id': 715, 'label': 'USERS@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Container', 'position': 'intermediate', 'attributes': []}, {'id': 92, 'label': 'DOMAIN ADMINS@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 376, 'label': 'DEFAULT DOMAIN POLICY@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 344, 'label': 'DF-MS-SHS.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 73, 'label': 'GMSA_SHS_PWD@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 250, 'label': 'HAYDEN@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 345, 'label': 'DF-WIN10-DEV01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 393, 'label': 'DISABLEFIREWALL@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 371, 'label': 'DISABLEIPV6@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 381, 'label': 'DISABLELDAPSECURITY@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 7, 'label': 'DOMAIN CONTROLLERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 374, 'label': 'DOMAIN USERS ADMIN2@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 222, 'label': 'DU001@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 390, 'label': 'ENABLE AV@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 234, 'label': 'ROSHI@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 76, 'label': 'ENTERPRISE READ-ONLY DOMAIN CONTROLLERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 263, 'label': 'ESC13USER2@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 82, 'label': 'EVERYONE@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 336, 'label': 'FILESERVER01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 375, 'label': 'FORESTSEARCHORDER@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 251, 'label': 'GMANAGER@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 264, 'label': 'GMSA_SHS$@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 255, 'label': 'GMSA_SHS2$@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 249, 'label': 'GMSA_SHS21$@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 245, 'label': 'GMSA_SHS3$@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 244, 'label': 'GMSA_SHS7$@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 59, 'label': 'GPO ADMINS - WORKSTATIONS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 1449, 'label': 'GROUPS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'start', 'attributes': []}, {'id': 45, 'label': 'SUBDAS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 1451, 'label': 'GROUPS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'start', 'attributes': []}, {'id': 51, 'label': 'SERVERADMINS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'intermediate', 'attributes': []}, {'id': 49, 'label': 'HR@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 256, 'label': 'IAMADC@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 260, 'label': 'JBK@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 237, 'label': 'CHARLIE@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 372, 'label': 'KRB CLOCK SKEW@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 338, 'label': 'KRB-DEL-01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 382, 'label': 'LDAPTEST@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 527, 'label': 'MANAGED SERVICE ACCOUNTS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Container', 'position': 'start', 'attributes': []}, {'id': 261, 'label': 'MANUEL@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 258, 'label': 'MAPPER@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 257, 'label': 'NOPREAUTH@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 384, 'label': 'OPENFIREWALLPORTS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 225, 'label': 'ANDY@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 329, 'label': 'PC.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 99, 'label': 'PRINT OPERATORS@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 373, 'label': 'RPD@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 271, 'label': 'SCOTT@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 115, 'label': 'SERVER OPERATORS@GHOST.CORP', 'domain': 'GHOST.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 33, 'label': 'SERVER OPERATORS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 333, 'label': 'SERVER01.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 335, 'label': 'SERVER02.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 60, 'label': 'SERVICE DESK@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 246, 'label': 'SH2@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 1447, 'label': 'SHARPHOUND TEST@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'start', 'attributes': []}, {'id': 248, 'label': 'SHARPHOUND@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 1455, 'label': 'SHARPHOUND@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'start', 'attributes': []}, {'id': 369, 'label': 'SHARPHOUNDSERVICELOGON@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 241, 'label': 'SMSAMASTER@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 236, 'label': 'SMSASIMON@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 267, 'label': 'SMSA_BHE$@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 332, 'label': 'SRV-COMPROMISED.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 328, 'label': 'SRV-SHARPHOUND.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 342, 'label': 'SRV-TARGET.PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Computer', 'position': 'start', 'attributes': []}, {'id': 223, 'label': 'STEPHEN@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 266, 'label': 'SVC_DOMAINJOIN@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 243, 'label': 'SVC_KERB_DEL@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 268, 'label': 'SVC_SHS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 387, 'label': 'T1_ADMINS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 238, 'label': 'T1_FABIAN@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 239, 'label': 'T1_TONYMONTANA@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 77, 'label': 'T1_WACCOUNTRESTRICTIONS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Group', 'position': 'start', 'attributes': []}, {'id': 230, 'label': 'T2_HANNAHMONTANA@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 253, 'label': 'TARGET@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}, {'id': 386, 'label': 'TESTUSERSETTING@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'GPO', 'position': 'start', 'attributes': []}, {'id': 1453, 'label': 'USERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'intermediate', 'attributes': []}, {'id': 228, 'label': 'HACKERDA@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'intermediate', 'attributes': []}, {'id': 1452, 'label': 'TIER1@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'start', 'attributes': []}, {'id': 1446, 'label': 'USERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'OU', 'position': 'intermediate', 'attributes': []}, {'id': 515, 'label': 'USERS@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'Container', 'position': 'start', 'attributes': []}, {'id': 265, 'label': 'ZZZIGNE@PHANTOM.CORP', 'domain': 'PHANTOM.CORP', 'shape': 'image', 'instance': 'User', 'position': 'start', 'attributes': []}];
+window.data_edges = [{'from': 330, 'to': 44, 'label': 'MemberOf'}, {'from': 44, 'to': 360, 'label': 'ADCSESC3'}, {'from': 360, 'to': 1454, 'label': 'Contains'}, {'from': 1454, 'to': 1448, 'label': 'Contains'}, {'from': 1448, 'to': 242, 'label': 'Contains'}, {'from': 334, 'to': 44, 'label': 'MemberOf'}, {'from': 116, 'to': 347, 'label': 'CanLogOnLocallyOnDC'}, {'from': 347, 'to': 84, 'label': 'MemberOf'}, {'from': 84, 'to': 360, 'label': 'ADCSESC6b'}, {'from': 232, 'to': 12, 'label': 'MemberOf'}, {'from': 12, 'to': 360, 'label': 'ADCSESC3'}, {'from': 331, 'to': 44, 'label': 'MemberOf'}, {'from': 337, 'to': 235, 'label': 'HasSession'}, {'from': 235, 'to': 9, 'label': 'MemberOf'}, {'from': 9, 'to': 242, 'label': 'WriteOwner'}, {'from': 378, 'to': 1456, 'label': 'GPLink'}, {'from': 1456, 'to': 327, 'label': 'Contains'}, {'from': 327, 'to': 224, 'label': 'HasSession'}, {'from': 224, 'to': 9, 'label': 'MemberOf'}, {'from': 385, 'to': 1458, 'label': 'GPLink'}, {'from': 1458, 'to': 343, 'label': 'Contains'}, {'from': 343, 'to': 235, 'label': 'HasSession'}, {'from': 340, 'to': 224, 'label': 'HasSession'}, {'from': 377, 'to': 1458, 'label': 'GPLink'}, {'from': 83, 'to': 360, 'label': 'ADCSESC1'}, {'from': 127, 'to': 347, 'label': 'CanExtractDCSecrets'}, {'from': 229, 'to': 12, 'label': 'MemberOf'}, {'from': 240, 'to': 360, 'label': 'ADCSESC6b'}, {'from': 231, 'to': 12, 'label': 'MemberOf'}, {'from': 523, 'to': 326, 'label': 'Contains'}, {'from': 326, 'to': 224, 'label': 'HasSession'}, {'from': 1450, 'to': 340, 'label': 'Contains'}, {'from': 1457, 'to': 346, 'label': 'Contains'}, {'from': 346, 'to': 272, 'label': 'HasSession'}, {'from': 272, 'to': 34, 'label': 'AddMember'}, {'from': 34, 'to': 242, 'label': 'WriteOwner'}, {'from': 262, 'to': 12, 'label': 'MemberOf'}, {'from': 270, 'to': 12, 'label': 'MemberOf'}, {'from': 392, 'to': 1459, 'label': 'GPLink'}, {'from': 1459, 'to': 347, 'label': 'Contains'}, {'from': 370, 'to': 1458, 'label': 'GPLink'}, {'from': 391, 'to': 361, 'label': 'GPLink'}, {'from': 361, 'to': 715, 'label': 'Contains'}, {'from': 715, 'to': 92, 'label': 'Contains'}, {'from': 92, 'to': 360, 'label': 'ADCSESC10b'}, {'from': 376, 'to': 360, 'label': 'GPLink'}, {'from': 344, 'to': 73, 'label': 'MemberOf'}, {'from': 73, 'to': 250, 'label': 'ReadGMSAPassword'}, {'from': 250, 'to': 34, 'label': 'MemberOf'}, {'from': 345, 'to': 224, 'label': 'HasSession'}, {'from': 393, 'to': 361, 'label': 'GPLink'}, {'from': 371, 'to': 360, 'label': 'GPLink'}, {'from': 381, 'to': 1458, 'label': 'GPLink'}, {'from': 7, 'to': 360, 'label': 'ADCSESC3'}, {'from': 374, 'to': 1457, 'label': 'GPLink'}, {'from': 222, 'to': 327, 'label': 'AddKeyCredentialLink'}, {'from': 390, 'to': 1457, 'label': 'GPLink'}, {'from': 1457, 'to': 337, 'label': 'Contains'}, {'from': 337, 'to': 234, 'label': 'HasSession'}, {'from': 234, 'to': 34, 'label': 'MemberOf'}, {'from': 76, 'to': 360, 'label': 'ADCSESC3'}, {'from': 263, 'to': 12, 'label': 'MemberOf'}, {'from': 82, 'to': 360, 'label': 'ADCSESC10a'}, {'from': 336, 'to': 224, 'label': 'HasSession'}, {'from': 375, 'to': 1458, 'label': 'GPLink'}, {'from': 251, 'to': 12, 'label': 'MemberOf'}, {'from': 264, 'to': 44, 'label': 'MemberOf'}, {'from': 255, 'to': 44, 'label': 'MemberOf'}, {'from': 249, 'to': 44, 'label': 'MemberOf'}, {'from': 245, 'to': 44, 'label': 'MemberOf'}, {'from': 244, 'to': 44, 'label': 'MemberOf'}, {'from': 59, 'to': 390, 'label': 'GenericWrite'}, {'from': 1449, 'to': 45, 'label': 'Contains'}, {'from': 45, 'to': 34, 'label': 'MemberOf'}, {'from': 1451, 'to': 51, 'label': 'Contains'}, {'from': 51, 'to': 345, 'label': 'GenericAll'}, {'from': 49, 'to': 76, 'label': 'AddMember'}, {'from': 256, 'to': 12, 'label': 'MemberOf'}, {'from': 260, 'to': 12, 'label': 'MemberOf'}, {'from': 326, 'to': 237, 'label': 'HasSession'}, {'from': 237, 'to': 34, 'label': 'MemberOf'}, {'from': 372, 'to': 360, 'label': 'GPLink'}, {'from': 338, 'to': 343, 'label': 'AllowedToDelegate'}, {'from': 382, 'to': 1458, 'label': 'GPLink'}, {'from': 527, 'to': 250, 'label': 'Contains'}, {'from': 261, 'to': 12, 'label': 'MemberOf'}, {'from': 258, 'to': 12, 'label': 'MemberOf'}, {'from': 257, 'to': 12, 'label': 'MemberOf'}, {'from': 384, 'to': 360, 'label': 'GPLink'}, {'from': 346, 'to': 225, 'label': 'HasSession'}, {'from': 225, 'to': 34, 'label': 'MemberOf'}, {'from': 329, 'to': 44, 'label': 'MemberOf'}, {'from': 99, 'to': 347, 'label': 'CanLoadCode'}, {'from': 373, 'to': 360, 'label': 'GPLink'}, {'from': 271, 'to': 12, 'label': 'MemberOf'}, {'from': 115, 'to': 347, 'label': 'CanExtractDCSecrets'}, {'from': 33, 'to': 343, 'label': 'CanExtractDCSecrets'}, {'from': 333, 'to': 44, 'label': 'MemberOf'}, {'from': 335, 'to': 44, 'label': 'MemberOf'}, {'from': 51, 'to': 360, 'label': 'ADCSESC9a'}, {'from': 60, 'to': 258, 'label': 'ForceChangePassword'}, {'from': 246, 'to': 12, 'label': 'MemberOf'}, {'from': 1447, 'to': 272, 'label': 'Contains'}, {'from': 248, 'to': 12, 'label': 'MemberOf'}, {'from': 1455, 'to': 344, 'label': 'Contains'}, {'from': 369, 'to': 1455, 'label': 'GPLink'}, {'from': 241, 'to': 12, 'label': 'MemberOf'}, {'from': 236, 'to': 326, 'label': 'AddAllowedToAct'}, {'from': 326, 'to': 234, 'label': 'HasSession'}, {'from': 267, 'to': 44, 'label': 'MemberOf'}, {'from': 332, 'to': 44, 'label': 'MemberOf'}, {'from': 328, 'to': 360, 'label': 'GoldenCert'}, {'from': 342, 'to': 44, 'label': 'MemberOf'}, {'from': 223, 'to': 12, 'label': 'MemberOf'}, {'from': 266, 'to': 12, 'label': 'MemberOf'}, {'from': 243, 'to': 12, 'label': 'MemberOf'}, {'from': 268, 'to': 12, 'label': 'MemberOf'}, {'from': 387, 'to': 1457, 'label': 'GPLink'}, {'from': 238, 'to': 12, 'label': 'MemberOf'}, {'from': 239, 'to': 340, 'label': 'GenericAll'}, {'from': 77, 'to': 344, 'label': 'WriteAccountRestrictions'}, {'from': 230, 'to': 12, 'label': 'MemberOf'}, {'from': 253, 'to': 12, 'label': 'MemberOf'}, {'from': 386, 'to': 1453, 'label': 'GPLink'}, {'from': 1453, 'to': 228, 'label': 'Contains'}, {'from': 228, 'to': 34, 'label': 'MemberOf'}, {'from': 1452, 'to': 1446, 'label': 'Contains'}, {'from': 1446, 'to': 250, 'label': 'Contains'}, {'from': 515, 'to': 224, 'label': 'Contains'}, {'from': 1453, 'to': 234, 'label': 'Contains'}, {'from': 1446, 'to': 225, 'label': 'Contains'}, {'from': 265, 'to': 12, 'label': 'MemberOf'}];</script>
+
+    </div>
+
+
+  </body>
+  <!-- graph.js en dernier pour que les variables soient bien définies-->
+  <script type="text/javascript" src="../js/icon.js"></script>
+  <script type="text/javascript" src="../js/graph.js"></script>
+  <script type="text/javascript" src="../js/custom.js"></script>
+</html>	

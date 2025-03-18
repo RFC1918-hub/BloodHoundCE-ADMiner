@@ -1,0 +1,20 @@
+AuthType Basic
+AuthName "Login with your Active Directory account"
+AuthBasicProvider ldap
+
+# LDAP URL for Domain
+AuthLDAPURL "ldap://Domain.local/DC=Domain,DC=local?sAMAccountName?sub?(objectClass=user)"
+AuthLDAPCompareAsUser off
+LDAPReferrals off
+
+# Administrator account binding
+AuthLDAPBindDN "CN=Administrator,CN=Users,DC=Domain,DC=local"
+AuthLDAPBindPassword "S3curePassword"
+
+# Allow any authenticated user for initial testing
+# Require valid-user
+
+# Once basic auth is working, uncomment to restrict to specific groups
+<RequireAny>
+    Require ldap-group CN=Domain Admins,CN=Users,DC=Domain,DC=local
+</RequireAny>

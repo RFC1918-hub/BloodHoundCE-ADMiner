@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <title>Dashboard</title>
+    <meta charset="utf-8" />
+
+    <script type="text/javascript" src="../js/ag-grid-community.js"></script>
+    <script type="text/javascript" src="../js/vis.min.js"></script>
+    <script type="text/javascript" src="../js/dagre.min.js"></script>
+    <script type="text/javascript" src="../js/webfont.js"></script>
+    <script type="text/javascript" src="../js/bootstrap.js"></script>
+
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/popper.min.js"></script>
+    <script type="text/javascript" src="../js/bootstrap4.js"></script>
+    <!-- without bootstrap 4, there is a bug on the main dashboard (the tables at the bottom of the cards can no longer be open), this black magic is beyond my powers.... -->
+
+    <link rel="stylesheet" type="text/css" href="../css/graph.css" />
+
+    <link rel="stylesheet" type="text/css" href="../css/mazars-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.min.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap_4.0.0.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap-extended.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="../css/sb-admin.css" />
+
+    <link rel="stylesheet" href="../css/font.css" />
+
+    <link rel="icon" href="../assets/favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" type="text/css" href="../css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../css/description.css" />
+  </head>
+
+  <body>
+    <header>
+      <nav
+        class="navbar navbar-expand-lg navbar-dark mb-3"
+        style="background-color: rgb(44, 62, 80)"
+      >
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html" id="title">
+            <img src="../assets/hub.svg" class="mx-2" height="30" id="hub" />
+            AD Miner
+          </a>
+
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarColor01"
+            aria-controls="navbarColor01"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarColor01">
+            <ul class="navbar-nav me-auto" style="margin: auto">
+              <li class="nav-item" style="margin: auto">
+                <div class="ml-0 text-light" id="title_current_page">ACL Anomaly</div>
+              </li>
+
+              <li
+                class="nav-item ml-1"
+                style="margin: auto; display: none"
+                id="button_description"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  data-bs-toggle="offcanvas"
+                  href="#offcanvasExample"
+                  role="button"
+                  aria-controls="offcanvasExample"
+                >
+                  <img src="../assets/info_white.svg" height="20" />
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_download"
+                onclick="onBtnExport()"
+                title="Download grid data as CSV"
+              >
+                <a
+                  class="btn inline-block btn-circle"
+                  role="button"
+                  style="color: white;"
+                  id="button_download_link"
+                >
+                  <i class="bi bi-download"></i>
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_parameter"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseSettings"
+                  aria-expanded="false"
+                  aria-controls="collapseSettings"
+                >
+                  <img src="../assets/settings.svg" height="20" id="settings" />
+                </a>
+              </li>
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_path"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseNetwork"
+                  aria-expanded="false"
+                  aria-controls="collapseNetwork"
+                  onclick="displayPathGraph(last_path)"
+                >
+                  <img
+                    src="../assets/path_white.svg"
+                    height="20"
+                    id="settings"
+                  />
+                </a>
+              </li>
+            </ul>
+
+            <form class="form-inline my-2 my-lg-0 d-sm-none d-lg-block d-none">
+              <ul class="navbar-nav">
+                <div
+                  class="list-group search-bar-list-group"
+                  id="search-bar-list-group"
+                  style="
+                    margin-right: 20px;
+                    position: relative;
+                    z-index: 9999999999999;
+                    display: none;
+                  "
+                >
+                  <input
+                    class="form-control me-sm-2"
+                    type="text"
+                    placeholder="Search Node"
+                    onKeyUp="searchNode(this.value)"
+                  />
+                </div>
+              </ul>
+            </form>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div
+      class="offcanvas offcanvas-start"
+      tabindex="-1"
+      id="offcanvasExample"
+      aria-labelledby="offcanvasExampleLabel"
+    >
+      <div class="offcanvas-header">
+        <h3 class="offcanvas-title" id="offcanvasExampleLabel">Information</h3>
+        <button
+          type="button"
+          class="btn-close text-reset"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body">
+        <div>
+          <div id="description_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Description</h5>
+              <img
+                src="../assets/info.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_info"
+            >
+              An ACL (Access Control List) is a security mechanism that defines permissions and access rights for objects within the Active Directory structure.
+            </p>
+            <br />
+          </div>
+
+          <div id="risk_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Risk</h5>
+              <img
+                src="../assets/warning.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_risk"
+            >
+              Misconfigured ACL can create access points or privilege escalation that an attacker could use to compromise the domain.<br /><br /><i class='bi bi-star-fill'></i><i class='bi bi-star-fill'></i><i class='bi bi-star-fill'></i> : At least one domain admin as target<br /><i class='bi bi-star-fill'></i><i class='bi bi-star-fill'></i><i class='bi bi-star'></i> : At least one object has a path to domain admin<br /><i class='bi bi-star-fill'></i><i class='bi bi-star'></i><i class='bi bi-star'></i> : At least one object admin of a computer<br /><i class='bi bi-star'></i><i class='bi bi-star'></i><i class='bi bi-star'></i> : Other
+            </p>
+            <br />
+          </div>
+
+          <div id="poa_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Point of Attention</h5>
+              <img
+                src="../assets/security.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_poa"
+            >
+              Regularly review and clean up ACL entries for users and groups that no longer require them.
+            </p>
+            <br />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="row"
+      style="margin-right: 15px !important; margin-left: 15px !important"
+    >
+
+    <div class="card-body" style="height:90vh; min-height: 800px;">
+      <div id="grid-wrapper" class="gridWrapper">
+        <div id="myGrid" class="ag-theme-balham gridWrapper"></div>
+        <!--
+          Au choix pour les thèmes :
+            - ag-theme-alpine
+            - ag-theme-balham
+            - ag-theme-material
+        -->
+      </div>
+    </div>
+	  <script type="text/javascript" charset="utf-8">
+
+var bigGrid;
+// Adjust the size of columns depending on the number of columns, keeping a minimal width of 200px and adding a horizontal scroll if necessary
+function adjustSizeDependingOnNbOfColumns(params) {
+  if (document.getElementById('grid-wrapper').offsetWidth / params.columnApi.getColumns().length < 200) {
+    gridOptions.columnApi.autoSizeAllColumns();
+    bigGrid = true;
+  }
+  else {
+    params.api.sizeColumnsToFit({defaultMinWidth: 200,});
+    bigGrid = false;
+  }
+}
+
+function onBtnExport() {
+	/*
+	This function get the data of the grid, clears it of useless data and download it as a CSV file.
+	*/
+	var csvRawData = gridOptions.api.getDataAsCsv();
+	var csvData = csvRawData.replace(/<[^>]*>\s*/g, '');
+	const filename = 'data.csv';
+
+	const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    
+    const downloadLink = document.querySelector("#button_download_link");
+    downloadLink.href = url;
+    downloadLink.download = filename;
+}
+
+function sort_string(valueA, valueB){
+	if (valueA === valueB) {
+		return 0;
+	}
+	return (valueA > valueB) ? 1 : -1;
+}
+
+function sort_integer(valueA, valueB){
+	return valueA - valueB 
+}
+
+function customComparator(_valueA, _valueB, nodeA, nodeB) {
+	if (typeof _valueA === 'object'){
+		if (typeof _valueA.value === 'string'){
+			return sort_string(_valueA.value, _valueB.value)
+		}
+		return sort_integer(_valueA.value, _valueB.value)
+  	}
+	if (typeof _valueA === 'string'){
+		return sort_string(_valueA, _valueB)
+  	}
+	return sort_integer(_valueA, _valueB)
+}
+
+var columnDefs = [{
+                    field:"name",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },{
+                    field:"label",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },{
+                    field:"members count",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },{
+                    field:"type",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },{
+                    field:"targets count",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },{
+                    field:"interest",
+                    cellRenderer: function(params) {
+                        if (typeof params.data[params.column.colId] === 'object') {
+                            if (params.data[params.column.colId].value == "0") {
+                                return params.data[params.column.colId].value;
+                            }
+                            if (params.data[params.column.colId].link == 'FALSE_LINK') {
+                                params.data[params.column.colId] = '<p>' + params.data[params.column.colId].value + '</p>';
+                                return params.data[params.column.colId];
+                            }
+                            if (params.data[params.column.colId].link != null) {
+                                if (params.data[params.column.colId].before_link != null) {
+                                    var prepend = params.data[params.column.colId].before_link;
+                                }
+                                else {
+                                    var prepend = "";
+                                }
+                                params.data[params.column.colId] = prepend + '<a onMouseOver="this.style.color=#99c3ff" onMouseOut="this.style.color=#000" href="' + params.data[params.column.colId].link + '">'+ params.data[params.column.colId].value + '</a>';
+                                return params.data[params.column.colId];
+                            }
+                            return params.data[params.column.colId];
+                        }
+                        else {
+                            return params.value;
+                        }
+                    },
+                },];
+var rowData=[{'name': 'DU001@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'AddKeyCredentialLink', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000002\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DU001%40PHANTOM.CORPUserAddKeyCredentialLink.html\'>2 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'DU001@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'AllExtendedRights', 'members count': '-', 'targets count': '<i class=\'<i bi bi-person-fill 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DU001%40PHANTOM.CORPUserAllExtendedRights.html\'>STEPHEN@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'BOB@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'Owns', 'members count': '-', 'targets count': '<i class=\'<i bi bi-journal-text 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BOB%40PHANTOM.CORPUserOwns.html\'>GPCO-GPO@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'BOB@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'WriteOwner', 'members count': '-', 'targets count': '<i class=\'<i bi bi-journal-text 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BOB%40PHANTOM.CORPUserWriteOwner.html\'>GPCO-GPO@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'BOB@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'OwnsRaw', 'members count': '-', 'targets count': '<i class=\'<i bi bi-journal-text 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BOB%40PHANTOM.CORPUserOwnsRaw.html\'>GPCO-GPO@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'BOB@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'WriteDacl', 'members count': '-', 'targets count': '<i class=\'<i bi bi-journal-text 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BOB%40PHANTOM.CORPUserWriteDacl.html\'>GPCO-GPO@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'BOB@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'GenericWrite', 'members count': '-', 'targets count': '<i class=\'<i bi bi-journal-text 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BOB%40PHANTOM.CORPUserGenericWrite.html\'>GPCO-GPO@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'BOB@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'WriteOwnerRaw', 'members count': '-', 'targets count': '<i class=\'<i bi bi-journal-text 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BOB%40PHANTOM.CORPUserWriteOwnerRaw.html\'>GPCO-GPO@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'CERTMAN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'Owns', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000005\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERTMAN%40PHANTOM.CORPUserOwns.html\'>5 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'CERTMAN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'GenericAll', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000010\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERTMAN%40PHANTOM.CORPUserGenericAll.html\'>10 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'CERTMAN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'OwnsRaw', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000005\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERTMAN%40PHANTOM.CORPUserOwnsRaw.html\'>5 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ADDSELF@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'AddSelf', 'members count': '-', 'targets count': '<i class=\'<i bi bi-people-fill 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ADDSELF%40PHANTOM.CORPUserAddSelf.html\'>T0_ADMINS@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'SMSASIMON@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'AddAllowedToAct', 'members count': '-', 'targets count': '<i class=\'<i bi bi-pc-display 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_SMSASIMON%40PHANTOM.CORPUserAddAllowedToAct.html\'>JONAS-TEST-MS01.PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'T1_FABIAN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'Owns', 'members count': '-', 'targets count': '<i class=\'<i bi bi-pc-display 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_FABIAN%40PHANTOM.CORPUserOwns.html\'>SERVER02.PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'T1_FABIAN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'OwnsRaw', 'members count': '-', 'targets count': '<i class=\'<i bi bi-pc-display 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_FABIAN%40PHANTOM.CORPUserOwnsRaw.html\'>SERVER02.PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'T1_FABIAN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'WriteAccountRestrictions', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000002\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_FABIAN%40PHANTOM.CORPUserWriteAccountRestrictions.html\'>2 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'T1_TONYMONTANA@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'ADCSESC10b', 'members count': '-', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_TONYMONTANA%40PHANTOM.CORPUserADCSESC10b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'T1_TONYMONTANA@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'ADCSESC9b', 'members count': '-', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_TONYMONTANA%40PHANTOM.CORPUserADCSESC9b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'T1_TONYMONTANA@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'ADCSESC10a', 'members count': '-', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_TONYMONTANA%40PHANTOM.CORPUserADCSESC10a.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'T1_TONYMONTANA@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'ADCSESC9a', 'members count': '-', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_TONYMONTANA%40PHANTOM.CORPUserADCSESC9a.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'T1_TONYMONTANA@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'GenericAll', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000009\'></i>  <a class="grid-link" href=\'anomaly_acl_details_T1_TONYMONTANA%40PHANTOM.CORPUserGenericAll.html\'>9 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'CERTEXT@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'ADCSESC6b', 'members count': '-', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERTEXT%40PHANTOM.CORPUserADCSESC6b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'CERTEXT@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'ADCSESC3', 'members count': '-', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERTEXT%40PHANTOM.CORPUserADCSESC3.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'CERTEXT@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'AllExtendedRights', 'members count': '-', 'targets count': '<i class=\'<i bi bi-person-vcard 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERTEXT%40PHANTOM.CORPUserAllExtendedRights.html\'>CLIENTAUTH@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'SVC_DOMAINJOIN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'Owns', 'members count': '-', 'targets count': '<i class=\'<i bi bi-pc-display 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_SVC_DOMAINJOIN%40PHANTOM.CORPUserOwns.html\'>DC02.PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'SVC_DOMAINJOIN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'OwnsRaw', 'members count': '-', 'targets count': '<i class=\'<i bi bi-pc-display 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_SVC_DOMAINJOIN%40PHANTOM.CORPUserOwnsRaw.html\'>DC02.PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'SVC_DOMAINJOIN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'WriteAccountRestrictions', 'members count': '-', 'targets count': '<i class=\'<i bi bi-pc-display 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_SVC_DOMAINJOIN%40PHANTOM.CORPUserWriteAccountRestrictions.html\'>DC02.PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'SVC_PAYADMIN@PHANTOM.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'AddMember', 'members count': '-', 'targets count': '<i class=\'<i bi bi-people-fill 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_SVC_PAYADMIN%40PHANTOM.CORPUserAddMember.html\'>DOMAIN ADMINS@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'BH@GHOST.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'Owns', 'members count': '-', 'targets count': '<i class=\'<i bi bi-people-fill 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BH%40GHOST.CORPUserOwns.html\'>TEST@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'BH@GHOST.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'OwnsRaw', 'members count': '-', 'targets count': '<i class=\'<i bi bi-people-fill 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_BH%40GHOST.CORPUserOwnsRaw.html\'>TEST@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'TARGETUSERD@WRAITH.CORP', 'label': "<i class='bi bi-person-fill' title='User'></i> User", 'type': 'ForceChangePassword', 'members count': '-', 'targets count': '<i class=\'<i bi bi-person-fill 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_TARGETUSERD%40WRAITH.CORPUserForceChangePassword.html\'>TARGETUSERB@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'EXTEXCH01.WRAITH.CORP', 'label': "<i class='bi bi-pc-display' title='Computer'></i> Computer", 'type': 'Owns', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000012\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXTEXCH01.WRAITH.CORPComputerOwns.html\'>12 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'EXTEXCH01.WRAITH.CORP', 'label': "<i class='bi bi-pc-display' title='Computer'></i> Computer", 'type': 'OwnsRaw', 'members count': '-', 'targets count': '<i class=\'<i bi bi-bullseye 000012\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXTEXCH01.WRAITH.CORPComputerOwnsRaw.html\'>12 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'EVERYONE@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC10a', 'members count': '<i class="000071 bi bi-people-fill"></i> 71', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EVERYONE%40PHANTOM.CORPGroupADCSESC10a.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'EVERYONE@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC9a', 'members count': '<i class="000071 bi bi-people-fill"></i> 71', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EVERYONE%40PHANTOM.CORPGroupADCSESC9a.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'EVERYONE@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericWrite', 'members count': '<i class="000071 bi bi-people-fill"></i> 71', 'targets count': '<i class=\'<i bi bi-person-fill 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EVERYONE%40PHANTOM.CORPGroupGenericWrite.html\'>T1_FABIAN@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'AUTHENTICATED USERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC1', 'members count': '<i class="000071 bi bi-people-fill"></i> 71', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_AUTHENTICATED_USERS%40PHANTOM.CORPGroupADCSESC1.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'AUTHENTICATED USERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC3', 'members count': '<i class="000071 bi bi-people-fill"></i> 71', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_AUTHENTICATED_USERS%40PHANTOM.CORPGroupADCSESC3.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'AUTHENTICATED USERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC6b', 'members count': '<i class="000071 bi bi-people-fill"></i> 71', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_AUTHENTICATED_USERS%40PHANTOM.CORPGroupADCSESC6b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'AUTHENTICATED USERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC6a', 'members count': '<i class="000071 bi bi-people-fill"></i> 71', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_AUTHENTICATED_USERS%40PHANTOM.CORPGroupADCSESC6a.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'DOMAIN USERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC3', 'members count': '<i class="000044 bi bi-people-fill"></i> 44', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DOMAIN_USERS%40PHANTOM.CORPGroupADCSESC3.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'DOMAIN USERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC6b', 'members count': '<i class="000044 bi bi-people-fill"></i> 44', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DOMAIN_USERS%40PHANTOM.CORPGroupADCSESC6b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'DOMAIN COMPUTERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC3', 'members count': '<i class="000027 bi bi-people-fill"></i> 27', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DOMAIN_COMPUTERS%40PHANTOM.CORPGroupADCSESC3.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'DOMAIN COMPUTERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC6b', 'members count': '<i class="000027 bi bi-people-fill"></i> 27', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DOMAIN_COMPUTERS%40PHANTOM.CORPGroupADCSESC6b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ADMINISTRATORS@GHOST.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC10b', 'members count': '<i class="000005 bi bi-people-fill"></i> 5', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ADMINISTRATORS%40GHOST.CORPGroupADCSESC10b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'DOMAIN ADMINS@GHOST.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC10b', 'members count': '<i class="000004 bi bi-people-fill"></i> 4', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DOMAIN_ADMINS%40GHOST.CORPGroupADCSESC10b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'HELPDESKADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'AddMember', 'members count': '<i class="000003 bi bi-people-fill"></i> 3', 'targets count': '<i class=\'<i bi bi-bullseye 000003\'></i>  <a class="grid-link" href=\'anomaly_acl_details_HELPDESKADMINS%40PHANTOM.CORPGroupAddMember.html\'>3 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000061\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_ADMINS%40PHANTOM.CORPGroupGenericAll.html\'>61 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwnerRaw', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000018\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_ADMINS%40PHANTOM.CORPGroupWriteOwnerRaw.html\'>18 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'AllExtendedRights', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000005\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_ADMINS%40PHANTOM.CORPGroupAllExtendedRights.html\'>5 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericWrite', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000017\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_ADMINS%40PHANTOM.CORPGroupGenericWrite.html\'>17 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteDacl', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000018\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_ADMINS%40PHANTOM.CORPGroupWriteDacl.html\'>18 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwner', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000018\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_ADMINS%40PHANTOM.CORPGroupWriteOwner.html\'>18 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'CERT PUBLISHERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000009\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERT_PUBLISHERS%40PHANTOM.CORPGroupGenericAll.html\'>9 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwner', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000002\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40PHANTOM.CORPGroupWriteOwner.html\'>2 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC6b', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40PHANTOM.CORPGroupADCSESC6b.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC3', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40PHANTOM.CORPGroupADCSESC3.html\'>PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteDacl', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000002\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40PHANTOM.CORPGroupWriteDacl.html\'>2 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwnerRaw', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000002\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40PHANTOM.CORPGroupWriteOwnerRaw.html\'>2 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000002\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40PHANTOM.CORPGroupGenericAll.html\'>2 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'CERT PUBLISHERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000004\'></i>  <a class="grid-link" href=\'anomaly_acl_details_CERT_PUBLISHERS%40WRAITH.CORPGroupGenericAll.html\'>4 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'EXCHANGE SERVERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC9a', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_SERVERS%40WRAITH.CORPGroupADCSESC9a.html\'>WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'EXCHANGE SERVERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericWrite', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000011\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_SERVERS%40WRAITH.CORPGroupGenericWrite.html\'>11 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'EXCHANGE SERVERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ForceChangePassword', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000011\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_SERVERS%40WRAITH.CORPGroupForceChangePassword.html\'>11 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteDacl', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000034\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_WINDOWS_PERMISSIONS%40WRAITH.CORPGroupWriteDacl.html\'>34 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ForceChangePassword', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000034\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_WINDOWS_PERMISSIONS%40WRAITH.CORPGroupForceChangePassword.html\'>34 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'AddMember', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000055\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_WINDOWS_PERMISSIONS%40WRAITH.CORPGroupAddMember.html\'>55 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC9a', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_WINDOWS_PERMISSIONS%40WRAITH.CORPGroupADCSESC9a.html\'>WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'EXCHANGE TRUSTED SUBSYSTEM@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000496\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_TRUSTED_SUBSYSTEM%40WRAITH.CORPGroupGenericAll.html\'>496 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'EXCHANGE TRUSTED SUBSYSTEM@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'AddMember', 'members count': '<i class="000002 bi bi-people-fill"></i> 2', 'targets count': '<i class=\'<i bi bi-bullseye 000019\'></i>  <a class="grid-link" href=\'anomaly_acl_details_EXCHANGE_TRUSTED_SUBSYSTEM%40WRAITH.CORPGroupAddMember.html\'>19 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'ENTERPRISE KEY ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_KEY_ADMINS%40PHANTOM.CORPGroupGenericAll.html\'>KEYS@GHOST.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE KEY ADMINS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'AddKeyCredentialLink', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-bullseye 000002\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_KEY_ADMINS%40PHANTOM.CORPGroupAddKeyCredentialLink.html\'>2 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'HR@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'AddMember', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-bullseye 000008\'></i>  <a class="grid-link" href=\'anomaly_acl_details_HR%40PHANTOM.CORPGroupAddMember.html\'>8 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'GPO ADMINS - WORKSTATIONS@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericWrite', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-journal-text 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_GPO_ADMINS_-_WORKSTATIONS%40PHANTOM.CORPGroupGenericWrite.html\'>ENABLE AV@PHANTOM.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'SERVICE DESK@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ForceChangePassword', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-bullseye 000004\'></i>  <a class="grid-link" href=\'anomaly_acl_details_SERVICE_DESK%40PHANTOM.CORPGroupForceChangePassword.html\'>4 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'GMSA_SHS_PWD@PHANTOM.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ReadGMSAPassword', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-bullseye 000006\'></i>  <a class="grid-link" href=\'anomaly_acl_details_GMSA_SHS_PWD%40PHANTOM.CORPGroupReadGMSAPassword.html\'>6 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'DNSADMINS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwner', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DNSADMINS%40WRAITH.CORPGroupWriteOwner.html\'>MICROSOFTDNS@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'DNSADMINS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwnerRaw', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DNSADMINS%40WRAITH.CORPGroupWriteOwnerRaw.html\'>MICROSOFTDNS@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'DNSADMINS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteDacl', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_DNSADMINS%40WRAITH.CORPGroupWriteDacl.html\'>MICROSOFTDNS@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'RODC-MANAGERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteAccountRestrictions', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-pc-display 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_RODC-MANAGERS%40WRAITH.CORPGroupWriteAccountRestrictions.html\'>EXTRODC01.WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ORGANIZATION MANAGEMENT@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-bullseye 000526\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ORGANIZATION_MANAGEMENT%40WRAITH.CORPGroupGenericAll.html\'>526 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><span class='2'></span><i class='bi bi-star-fill' style='color: orange'></i><i class='bi bi-star' style='color: orange'></i>"}, {'name': 'ORGANIZATION MANAGEMENT@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericWrite', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-bullseye 000011\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ORGANIZATION_MANAGEMENT%40WRAITH.CORPGroupGenericWrite.html\'>11 targets&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ORGANIZATION MANAGEMENT@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'ADCSESC9a', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-globe 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ORGANIZATION_MANAGEMENT%40WRAITH.CORPGroupADCSESC9a.html\'>WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i><span class='3'></span><i class='bi bi-star-fill' style='color: red'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwner', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40WRAITH.CORPGroupWriteOwner.html\'>MICROSOFTDNS@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'GenericAll', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40WRAITH.CORPGroupGenericAll.html\'>KEYS@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteOwnerRaw', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40WRAITH.CORPGroupWriteOwnerRaw.html\'>MICROSOFTDNS@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}, {'name': 'ENTERPRISE DOMAIN CONTROLLERS@WRAITH.CORP', 'label': "<i class='bi bi-people-fill' title='Group'></i> Group", 'type': 'WriteDacl', 'members count': '<i class="000001 bi bi-people-fill"></i> 1', 'targets count': '<i class=\'<i bi bi-box 000001\'></i>  <a class="grid-link" href=\'anomaly_acl_details_ENTERPRISE_DOMAIN_CONTROLLERS%40WRAITH.CORPGroupWriteDacl.html\'>MICROSOFTDNS@WRAITH.CORP&nbsp;<i class=\'bi bi-box-arrow-up-right\' style=\'color: #0969da;\'></i></a>', 'interest': "<i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i><i class='bi bi-star' style='color: green'></i>"}];
+
+
+var url = new URL(window.location.href);
+var parameter = url.searchParams.get("parameter");
+if (parameter != null) {
+	arrayData = display_computer(parameter);
+	rowData = arrayData[0];
+	columnDefs = arrayData[1];
+}
+
+
+function display_computer(parameter) {
+	var rowData2 = [];
+	for (var i=0; i<rowData.length; i++) {
+		const keys = Object.keys(rowData[i]);
+
+		if (window.location.href.includes('users_admin_of_computers')) { 
+			if (rowData[i][keys[0]] == parameter) {
+				for (var k=0; k<rowData[i][keys[1]].length; k++) {
+					var new_dico = {};
+					new_dico[parameter] = rowData[i][keys[1]][k];
+					new_dico['href_link']='';
+					rowData2.push(new_dico);
+				}
+			}
+		}
+		else if (window.location.href.includes('kerberoastables_SPN')) {
+			if (rowData[i][keys[0]] == parameter) {
+				var new_dico = {};
+				new_dico[parameter] = rowData[i][keys[1]];
+				new_dico['href_link']='';
+				rowData2.push(new_dico);
+			}
+		}
+		else if (window.location.href.includes('users_rdp_access') || window.location.href.includes('computers_list_of_rdp_users')) {
+			
+			if (rowData[i][keys[0]].includes(parameter)) {
+				const startSubstring = "<p style='visibility:hidden;'>";
+				const endSubstring = "</p>";
+
+				const startIndex = rowData[i][keys[1]].indexOf(startSubstring) + startSubstring.length;
+				const endIndex = rowData[i][keys[1]].indexOf(endSubstring, startIndex);
+				data = JSON.parse(rowData[i][keys[1]].substring(startIndex, endIndex).replaceAll(`'`,`"`))
+				for (var j=0; j<data.length; j++) {
+					var new_dico = {};
+					new_dico[parameter] = data[j];
+					new_dico['href_link']='';
+					rowData2.push(new_dico);
+				}
+			}
+		}
+		else {
+			n = 2;
+			// In generic_formating.py, function formatGridValues3Columns
+			if (rowData[i][keys[0]] == parameter) {
+				data = JSON.parse(rowData[i][keys[n]]["value"].substring(91, rowData[i][keys[n]]["value"].length-4).replaceAll(`'`,`"`))
+				for (var j=0; j<data.length; j++) {
+					var new_dico = {};
+					new_dico[parameter] = data[j];
+					new_dico['href_link']='';
+					rowData2.push(new_dico);
+				}
+			}
+		}
+	}
+	columnDefs2 = [{field: parameter}];
+	return [rowData2, columnDefs2];
+}
+
+var url = new URL(window.location.href);
+var object = url.searchParams.get("object");
+if (object != null) {
+	arrayData = filterByObject(object);
+	rowData = arrayData[0];
+	columnDefs = arrayData[1];
+}
+
+function filterByObject(object) {
+	var rowData2 = [];
+	for (var i=0; i<rowData.length; i++) {
+		if (rowData[i]['TO CHANGE'].includes(object) && !rowData[i]['TO CHANGE'].includes('> ' + object + ' <')) {
+			new_dico = {object: '0'};
+			new_dico[object] = rowData[i]['TO CHANGE'].slice(rowData[i]['TO CHANGE'].indexOf('>')+2,-8);
+			rowData2.push(new_dico);
+		}
+	}
+	columnDefs2 = [{field: object}];
+	return [rowData2, columnDefs2];
+}
+
+// Grid options
+const gridOptions = {
+	columnDefs: columnDefs,
+	rowData: rowData,
+	defaultColDef: {resizable: true, filter: 'agTextColumnFilter', sortable: true, comparator: customComparator,},
+	suppressFieldDotNotation: true,
+	suppressHorizontalScroll: false,
+	animateRows: true,
+	pagination: true,
+	paginationPageSize: 100000,
+	enableCellTextSelection: true,
+	ensureDomOrder: true,
+	rowHeight: 38,
+	onGridReady: adjustSizeDependingOnNbOfColumns,
+	onGridSizeChanged: adjustSizeDependingOnNbOfColumns
+};
+
+
+// setup the grid after the page has finished loading
+document.addEventListener('DOMContentLoaded', function () {
+	var gridDiv = document.querySelector('#myGrid');
+	new agGrid.Grid(gridDiv, gridOptions);
+
+	// Adjust size of columns for large grids when scrolling horizontally
+	if (bigGrid) {
+		document.querySelector(".ag-body-horizontal-scroll-viewport").addEventListener("scroll", (event) => {
+			clearTimeout(window.scrollEndTimer)
+			window.scrollEndTimer = setTimeout((a) => {
+				gridOptions.columnApi.autoSizeAllColumns(); 
+			}, 100)
+		});
+	}
+});
+
+	  </script>
+
+
+    </div>
+
+
+  </body>
+  <!-- graph.js en dernier pour que les variables soient bien définies-->
+  <script type="text/javascript" src="../js/icon.js"></script>
+  <script type="text/javascript" src="../js/graph.js"></script>
+  <script type="text/javascript" src="../js/custom.js"></script>
+</html>	

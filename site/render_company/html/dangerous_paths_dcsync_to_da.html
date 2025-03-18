@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <title>Dashboard</title>
+    <meta charset="utf-8" />
+
+    <script type="text/javascript" src="../js/ag-grid-community.js"></script>
+    <script type="text/javascript" src="../js/vis.min.js"></script>
+    <script type="text/javascript" src="../js/dagre.min.js"></script>
+    <script type="text/javascript" src="../js/webfont.js"></script>
+    <script type="text/javascript" src="../js/bootstrap.js"></script>
+
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/popper.min.js"></script>
+    <script type="text/javascript" src="../js/bootstrap4.js"></script>
+    <!-- without bootstrap 4, there is a bug on the main dashboard (the tables at the bottom of the cards can no longer be open), this black magic is beyond my powers.... -->
+
+    <link rel="stylesheet" type="text/css" href="../css/graph.css" />
+
+    <link rel="stylesheet" type="text/css" href="../css/mazars-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap-icons.min.css" />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap_4.0.0.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="../css/bootstrap-extended.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="../css/sb-admin.css" />
+
+    <link rel="stylesheet" href="../css/font.css" />
+
+    <link rel="icon" href="../assets/favicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" type="text/css" href="../css/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../css/description.css" />
+  </head>
+
+  <body>
+    <header>
+      <nav
+        class="navbar navbar-expand-lg navbar-dark mb-3"
+        style="background-color: rgb(44, 62, 80)"
+      >
+        <div class="container-fluid">
+          <a class="navbar-brand" href="index.html" id="title">
+            <img src="../assets/hub.svg" class="mx-2" height="30" id="hub" />
+            AD Miner
+          </a>
+
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarColor01"
+            aria-controls="navbarColor01"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarColor01">
+            <ul class="navbar-nav me-auto" style="margin: auto">
+              <li class="nav-item" style="margin: auto">
+                <div class="ml-0 text-light" id="title_current_page">DCSync privileges to DA privileges</div>
+              </li>
+
+              <li
+                class="nav-item ml-1"
+                style="margin: auto; display: none"
+                id="button_description"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  data-bs-toggle="offcanvas"
+                  href="#offcanvasExample"
+                  role="button"
+                  aria-controls="offcanvasExample"
+                >
+                  <img src="../assets/info_white.svg" height="20" />
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_download"
+                onclick="onBtnExport()"
+                title="Download grid data as CSV"
+              >
+                <a
+                  class="btn inline-block btn-circle"
+                  role="button"
+                  style="color: white;"
+                  id="button_download_link"
+                >
+                  <i class="bi bi-download"></i>
+                </a>
+              </li>
+
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_parameter"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseSettings"
+                  aria-expanded="false"
+                  aria-controls="collapseSettings"
+                >
+                  <img src="../assets/settings.svg" height="20" id="settings" />
+                </a>
+              </li>
+              <li
+                class="nav-item"
+                style="margin: auto; display: none"
+                id="button_path"
+              >
+                <a
+                  class="btn btn-primary inline-block btn-circle btn-sm"
+                  role="button"
+                  data-toggle="collapse"
+                  href="#collapseNetwork"
+                  aria-expanded="false"
+                  aria-controls="collapseNetwork"
+                  onclick="displayPathGraph(last_path)"
+                >
+                  <img
+                    src="../assets/path_white.svg"
+                    height="20"
+                    id="settings"
+                  />
+                </a>
+              </li>
+            </ul>
+
+            <form class="form-inline my-2 my-lg-0 d-sm-none d-lg-block d-none">
+              <ul class="navbar-nav">
+                <div
+                  class="list-group search-bar-list-group"
+                  id="search-bar-list-group"
+                  style="
+                    margin-right: 20px;
+                    position: relative;
+                    z-index: 9999999999999;
+                    display: none;
+                  "
+                >
+                  <input
+                    class="form-control me-sm-2"
+                    type="text"
+                    placeholder="Search Node"
+                    onKeyUp="searchNode(this.value)"
+                  />
+                </div>
+              </ul>
+            </form>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <div
+      class="offcanvas offcanvas-start"
+      tabindex="-1"
+      id="offcanvasExample"
+      aria-labelledby="offcanvasExampleLabel"
+    >
+      <div class="offcanvas-header">
+        <h3 class="offcanvas-title" id="offcanvasExampleLabel">Information</h3>
+        <button
+          type="button"
+          class="btn-close text-reset"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="offcanvas-body">
+        <div>
+          <div id="description_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Description</h5>
+              <img
+                src="../assets/info.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_info"
+            >
+              List of the main paths to become a domain administrator
+            </p>
+            <br />
+          </div>
+
+          <div id="risk_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Risk</h5>
+              <img
+                src="../assets/warning.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_risk"
+            >
+              This representation exposes the most common links to become domain administrator, which means the more likely to be used during an attack.
+            </p>
+            <br />
+          </div>
+
+          <div id="poa_part" style="visibility: hidden">
+            <div class="d-flex justify-content-left">
+              <h5>Point of Attention</h5>
+              <img
+                src="../assets/security.svg"
+                class="mx-2"
+                height="30"
+                id="settings"
+              />
+            </div>
+            <p
+              class="descriptionText"
+              style="font-weight: 400"
+              id="description_poa"
+            >
+              Tackling the most common paths is a good approach to limit the risk of a compromission as it removes most of the paths to domain administrator.
+            </p>
+            <br />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="row"
+      style="margin-right: 15px !important; margin-left: 15px !important"
+    >
+
+
+<div class="row">
+	<h3 style="margin-bottom: 30px;"> Main paths to Domain Admin</h3>
+</div>
+
+
+<div class="row" id="mainRow"></div>
+
+</style>
+
+<script type="text/javascript" charset="utf-8">
+
+
+function mainFunction(){
+
+	for (value in mainCompromisePaths)
+	{	
+
+		if (mainCompromisePaths[value]/numberPaths <= 0.05) {
+			var color = "bg-success";
+		}
+		else if (mainCompromisePaths[value]/numberPaths > 0.05 && mainCompromisePaths[value]/numberPaths <= 0.1) {
+			var color = "bg-info";
+		}
+		else if (mainCompromisePaths[value]/numberPaths > 0.1 && mainCompromisePaths[value]/numberPaths <= 0.15) {
+			var color = "bg-warning";
+		}
+		else {
+			var color = "bg-danger";
+		}
+		document.getElementById("mainRow").innerHTML += `
+		<div class='col-6'>
+			<div class='progress'>
+				<div 
+				class='progress-bar ${color}' 
+				role='progressbar' 
+				style='width: ${100*(mainCompromisePaths[value]/numberPaths)}%' 
+				aria-valuenow='${mainCompromisePaths[value]}' 
+				aria-valuemin='0' 
+				aria-valuemax='${numberPaths}'>
+				</div>
+			</div>
+			<div style="
+			text-align: right;
+			margin-top: -19px;
+			margin-right: 5px;
+			font-size: 14px;
+			color: rgb(80,80,80);">
+				${mainCompromisePaths[value]} paths - ${Math.round(100 * (mainCompromisePaths[value]/numberPaths))} %
+			</div>
+		</div>
+		<div class='col-6'>
+			<p>${value}</p>
+		</div>`;
+	}
+
+}
+
+
+const mainCompromisePaths = {'PHANTOM.CORP ⮕ Contains ⮕ TIER0@PHANTOM.CORP': 538, 'DOMAIN USERS@PHANTOM.CORP ⮕ ADCSESC3 ⮕ PHANTOM.CORP': 424, 'TIER0@PHANTOM.CORP ⮕ Contains ⮕ USERS@PHANTOM.CORP': 284, 'DOMAIN COMPUTERS@PHANTOM.CORP ⮕ ADCSESC3 ⮕ PHANTOM.CORP': 239, 'TIER1@PHANTOM.CORP ⮕ Contains ⮕ USERS@PHANTOM.CORP': 231, 'PHANTOM.CORP ⮕ Contains ⮕ TIER1@PHANTOM.CORP': 231, 'PHANTOM.CORP ⮕ Contains ⮕ USERS@PHANTOM.CORP': 144, 'DC01.PHANTOM.CORP ⮕ HasSession ⮕ JD@PHANTOM.CORP': 134, 'DOMAIN CONTROLLERS@PHANTOM.CORP ⮕ Contains ⮕ DC01.PHANTOM.CORP': 132, 'TIER0@PHANTOM.CORP ⮕ Contains ⮕ SERVICEACCOUNTS@PHANTOM.CORP': 127, 'TIER0@PHANTOM.CORP ⮕ Contains ⮕ GROUPS@PHANTOM.CORP': 127, 'PHANTOM.CORP ⮕ Contains ⮕ MANAGED SERVICE ACCOUNTS@PHANTOM.CORP': 104, 'GHOST-DC01.GHOST.CORP ⮕ MemberOf ⮕ ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP': 102, 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP ⮕ ADCSESC6b ⮕ PHANTOM.CORP': 101, 'HAYDEN@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 90, 'JD@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 88, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ ADMINISTRATOR@PHANTOM.CORP': 78, 'GMSA_SHS_PWD@PHANTOM.CORP ⮕ ReadGMSAPassword ⮕ HAYDEN@PHANTOM.CORP': 60, 'ADMINISTRATOR@PHANTOM.CORP ⮕ MemberOf ⮕ ENTERPRISE ADMINS@PHANTOM.CORP': 59, 'DF-MS-SHS.PHANTOM.CORP ⮕ MemberOf ⮕ GMSA_SHS_PWD@PHANTOM.CORP': 53, 'COMPUTERS@PHANTOM.CORP ⮕ Contains ⮕ ADMINSERVER01.PHANTOM.CORP': 52, 'DOMAIN ADMINS@GHOST.CORP ⮕ ADCSESC10b ⮕ PHANTOM.CORP': 51, 'ADMINISTRATOR@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 49, 'JD@PHANTOM.CORP ⮕ MemberOf ⮕ ENTERPRISE ADMINS@PHANTOM.CORP': 44, 'ROSHI@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 43, 'ANDY@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 42, 'ALICE-LAPTOP.PHANTOM.CORP ⮕ HasSession ⮕ ADMINISTRATOR@PHANTOM.CORP': 42, 'WORKSTATIONS@PHANTOM.CORP ⮕ Contains ⮕ ALICE-LAPTOP.PHANTOM.CORP': 39, 'USERS@GHOST.CORP ⮕ Contains ⮕ DOMAIN ADMINS@GHOST.CORP': 34, 'GHOST.CORP ⮕ Contains ⮕ USERS@GHOST.CORP': 34, 'MANAGED SERVICE ACCOUNTS@PHANTOM.CORP ⮕ Contains ⮕ HAYDEN@PHANTOM.CORP': 31, 'PHANTOM.CORP ⮕ Contains ⮕ DOMAIN CONTROLLERS@PHANTOM.CORP': 29, 'SVC_PAYADMIN@PHANTOM.CORP ⮕ AddMember ⮕ DOMAIN ADMINS@PHANTOM.CORP': 27, 'PHANTOM.CORP ⮕ Contains ⮕ WORKSTATIONS@PHANTOM.CORP': 22, 'COMPUTERS@PHANTOM.CORP ⮕ Contains ⮕ PAYMENT01.PHANTOM.CORP': 21, 'ENABLE AV@PHANTOM.CORP ⮕ GPLink ⮕ COMPUTERS@PHANTOM.CORP': 18, 'SHARPHOUND@PHANTOM.CORP ⮕ Contains ⮕ DF-MS-SHS.PHANTOM.CORP': 17, 'MAPPER@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN USERS@PHANTOM.CORP': 17, 'ENTERPRISE READ-ONLY DOMAIN CONTROLLERS@PHANTOM.CORP ⮕ ADCSESC3 ⮕ PHANTOM.CORP': 17, 'DOMAIN CONTROLLERS@GHOST.CORP ⮕ Contains ⮕ GHOST-DC01.GHOST.CORP': 17, 'AM-WIN10-DEV02.PHANTOM.CORP ⮕ HasSession ⮕ ADMINISTRATOR@PHANTOM.CORP': 17, 'SHARPHOUND TEST@PHANTOM.CORP ⮕ Contains ⮕ SVC_PAYADMIN@PHANTOM.CORP': 17, 'PHANTOM.CORP ⮕ Contains ⮕ SHARPHOUND TEST@PHANTOM.CORP': 17, 'GMSA_SHS8$@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 15, 'ADMINSERVER01.PHANTOM.CORP ⮕ HasSession ⮕ ROSHI@PHANTOM.CORP': 15, 'PAYMENT01.PHANTOM.CORP ⮕ HasSession ⮕ ANDY@PHANTOM.CORP': 14, 'SUBDAS@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 12, 'JONAS-TEST-MS01.PHANTOM.CORP ⮕ HasSession ⮕ ROSHI@PHANTOM.CORP': 12, 'PAYMENT01.PHANTOM.CORP ⮕ HasSession ⮕ SVC_PAYADMIN@PHANTOM.CORP': 11, 'BM@WRAITH.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@WRAITH.CORP': 11, 'ADMINSERVER01.PHANTOM.CORP ⮕ HasSession ⮕ JD@PHANTOM.CORP': 10, 'DC01.PHANTOM.CORP ⮕ GoldenCert ⮕ PHANTOM.CORP': 9, 'SERVERADMINS@PHANTOM.CORP ⮕ GenericAll ⮕ ADMINSERVER01.PHANTOM.CORP': 8, 'ADMINISTRATOR@PHANTOM.CORP ⮕ MemberOf ⮕ ENTERPRISE KEY ADMINS@PHANTOM.CORP': 8, 'USERS@WRAITH.CORP ⮕ Contains ⮕ DOMAIN ADMINS@WRAITH.CORP': 8, 'WRAITH.CORP ⮕ Contains ⮕ USERS@WRAITH.CORP': 8, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ JD@PHANTOM.CORP': 7, 'ADMINSERVER01.PHANTOM.CORP ⮕ HasSession ⮕ ALICE@PHANTOM.CORP': 7, 'JONAS-TEST-MS01.PHANTOM.CORP ⮕ HasSession ⮕ ADMINISTRATOR@PHANTOM.CORP': 7, 'EXTDC01.WRAITH.CORP ⮕ HasSession ⮕ BM@WRAITH.CORP': 7, 'DF-WIN10-DEV01.PHANTOM.CORP ⮕ HasSession ⮕ ADMINISTRATOR@PHANTOM.CORP': 6, 'SERVERADMINS@PHANTOM.CORP ⮕ GenericAll ⮕ DF-WIN10-DEV01.PHANTOM.CORP': 6, 'CHARLIE@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 6, 'COMPUTERS@PHANTOM.CORP ⮕ Contains ⮕ JONAS-TEST-MS01.PHANTOM.CORP': 6, 'PHANTOM.CORP ⮕ Contains ⮕ COMPUTERS@PHANTOM.CORP': 6, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ ROSHI@PHANTOM.CORP': 5, 'JACK@WRAITH.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@WRAITH.CORP': 5, 'JONAS-TEST-MS01.PHANTOM.CORP ⮕ HasSession ⮕ ANDY@PHANTOM.CORP': 5, 'DA-NOPW2@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 4, 'COMPUTERS@PHANTOM.CORP ⮕ Contains ⮕ AM-WIN10-DEV02.PHANTOM.CORP': 3, 'EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP ⮕ ForceChangePassword ⮕ JACK@WRAITH.CORP': 3, 'DOMAIN CONTROLLERS@WRAITH.CORP ⮕ Contains ⮕ EXTDC01.WRAITH.CORP': 3, 'ALICE-LAPTOP.PHANTOM.CORP ⮕ HasSession ⮕ ALICE@PHANTOM.CORP': 3, 'EXCHANGE SERVERS@WRAITH.CORP ⮕ ADCSESC9a ⮕ WRAITH.CORP': 3, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ HAYDEN@PHANTOM.CORP': 2, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ ANDY@PHANTOM.CORP': 2, 'SERVICEACCOUNTS@PHANTOM.CORP ⮕ Contains ⮕ GMSA_SHS8$@PHANTOM.CORP': 2, 'HACKERDA@PHANTOM.CORP ⮕ MemberOf ⮕ DOMAIN ADMINS@PHANTOM.CORP': 2, 'ADMINSERVER01.PHANTOM.CORP ⮕ HasSession ⮕ ANDY@PHANTOM.CORP': 2, 'SERVERADMINS@PHANTOM.CORP ⮕ ADCSESC9a ⮕ PHANTOM.CORP': 2, 'COMPUTERS@PHANTOM.CORP ⮕ Contains ⮕ DF-WIN10-DEV01.PHANTOM.CORP': 2, 'AM-WIN10-DEV02.PHANTOM.CORP ⮕ HasSession ⮕ ALICE@PHANTOM.CORP': 2, 'JONAS-TEST-MS01.PHANTOM.CORP ⮕ HasSession ⮕ CHARLIE@PHANTOM.CORP': 2, 'SMSASIMON@PHANTOM.CORP ⮕ AddAllowedToAct ⮕ JONAS-TEST-MS01.PHANTOM.CORP': 1, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ DA-NOPW2@PHANTOM.CORP': 1, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ ALICE@PHANTOM.CORP': 1, 'GROUPS@PHANTOM.CORP ⮕ Contains ⮕ GMSA_SHS_PWD@PHANTOM.CORP': 1, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ CHARLIE@PHANTOM.CORP': 1, 'USERS@PHANTOM.CORP ⮕ Contains ⮕ HACKERDA@PHANTOM.CORP': 1, 'ADMINSERVER01.PHANTOM.CORP ⮕ HasSession ⮕ CHARLIE@PHANTOM.CORP': 1, '$141000-LDV9MS90TKNJ@WRAITH.CORP ⮕ MemberOf ⮕ EXCHANGE SERVERS@WRAITH.CORP': 1, 'T1_WACCOUNTRESTRICTIONS@PHANTOM.CORP ⮕ WriteAccountRestrictions ⮕ DF-MS-SHS.PHANTOM.CORP': 1, 'EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP ⮕ WriteDacl ⮕ JACK@WRAITH.CORP': 1, 'EXCHANGE TRUSTED SUBSYSTEM@WRAITH.CORP ⮕ MemberOf ⮕ EXCHANGE WINDOWS PERMISSIONS@WRAITH.CORP': 1, 'EXTCA01.WRAITH.CORP ⮕ HasSession ⮕ BM@WRAITH.CORP': 1, 'GPO ADMINS - WORKSTATIONS@PHANTOM.CORP ⮕ GenericWrite ⮕ ENABLE AV@PHANTOM.CORP': 1, 'ENTERPRISE DOMAIN CONTROLLERS@PHANTOM.CORP ⮕ ADCSESC3 ⮕ PHANTOM.CORP': 1};
+
+const numberPaths = 1878;
+
+mainFunction();
+
+</script>
+    </div>
+
+
+  </body>
+  <!-- graph.js en dernier pour que les variables soient bien définies-->
+  <script type="text/javascript" src="../js/icon.js"></script>
+  <script type="text/javascript" src="../js/graph.js"></script>
+  <script type="text/javascript" src="../js/custom.js"></script>
+</html>	
