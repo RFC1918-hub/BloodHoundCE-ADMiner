@@ -96,7 +96,13 @@ services:
   
   adminer-app:
     build: .
-    command: -cf ${ADMINER_REPORT_PREFIX:-company} -b bolt://${NEO4J_HOST:-graph-db:7687} -p ${NEO4J_SECRET:-bloodhoundcommunityedition}
+    command: 
+      - "-cf"
+      - "${ADMINER_REPORT_PREFIX:-company}"
+      - "-b"
+      - "bolt://${NEO4J_HOST:-graph-db:7687}"
+      - "-p"
+      - "${NEO4J_SECRET:-bloodhoundcommunityedition}"
     volumes:
       - ./site:/app
     depends_on:
